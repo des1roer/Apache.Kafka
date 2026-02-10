@@ -1,0 +1,166 @@
+### 1. PYTHON
+from confluent_kafka import serialization
+
+serializer = serialization.StringSerializer("utf_8")
+deserializer = serialization.StringDeserializer("utf_8")
+
+
+### 2. PYTHON
+serializer = serialization.IntegerSerializer()
+deserializer = serialization.IntegerDeserializer()
+
+
+### 3. PYTHON
+serializer = serialization.DoubleSerializer()
+deserializer = serialization.DoubleDeserializer()
+
+
+### 4. PYTHON
+from confluent_kafka.schema_registry.avro import (
+    AvroSerializer,
+    AvroDeserializer,
+)
+
+serializer = AvroSerializer(schema_registry_client, schema_str)
+deserializer = AvroDeserializer(schema_registry_client)
+
+
+### 5. PYTHON
+from confluent_kafka.schema_registry.json_schema import (
+    JSONSerializer,
+    JSONDeserializer,
+)
+
+serializer = JSONSerializer(schema_str, schema_registry_client)
+deserializer = JSONDeserializer(schema_str)
+
+
+### 6. PYTHON
+from confluent_kafka.schema_registry.protobuf import (
+    ProtobufSerializer,
+    ProtobufDeserializer,
+)
+
+serializer = ProtobufSerializer(pb2, schema_registry_client)
+deserializer = ProtobufDeserializer(pb2)
+
+
+### 7. PYTHON
+class User:
+    def __init__(self, user_id, name):
+        self.id = user_id
+        self.name = name
+
+
+### 8. PYTHON
+from confluent_kafka.serialization import Serializer
+
+class UserSerializer(Serializer):
+   def __call__(self, obj: User, ctx=None):
+       name_bytes = obj.name.encode("utf-8")
+       name_size = len(name_bytes)
+
+       result = name_size.to_bytes(4, byteorder="big")
+       result += name_bytes
+       result += obj.id.to_bytes(4, byteorder="big")
+       return result
+
+
+### 9. PYTHON
+from confluent_kafka.serialization import Deserializer
+
+class UserDeserializer(Deserializer):
+   def __call__(self, value: bytes, ctx=None):
+       if value is None:
+           return None
+
+       name_size = int.from_bytes(value[0:4], byteorder="big")
+       name_bytes = value[4:4 + name_size]
+       name = name_bytes.decode("utf-8")
+
+       id_bytes = value[4 + name_size:8 + name_size]
+       id_value = int.from_bytes(id_bytes, byteorder="big")
+
+       return User(id_value, name)
+
+
+
+
+### 1. GOLANG
+// StringSerializer сериализует строку в байты
+func StringSerializer(s string) []byte {
+    return []byte(s)
+}
+
+// StringDeserializer десериализует байты в строку
+func StringDeserializer(data []byte) string {
+    return string(data)
+}
+
+
+### 2. GOLANG
+// IntegerSerializer преобразует целое число в байты
+func IntegerSerializer(i int) []byte {
+    buf := make([]byte, 4)
+    binary.BigEndian.PutUint32(buf, uint32(int32(i)))
+    return buf
+}
+
+// IntegerDeserializer преобразует байты в целое число
+func IntegerDeserializer(data []byte) int {
+    return int(int32(binary.BigEndian.Uint32(data)))
+}
+
+
+### 3. GOLANG
+// Int64Serializer преобразует целое число в байты
+func Int64Serializer(i int64) []byte {
+    buf := make([]byte, 8)
+    binary.BigEndian.PutUint64(buf, uint64(i))
+    return buf
+}
+
+// Int64Deserializer преобразует байты в целое число
+func Int64Deserializer(data []byte) int64 {
+    return int64(int64(binary.BigEndian.Uint64(data)))
+}
+
+
+### 4. GOLANG
+// DoubleSerializer преобразует значение с плавающей точкой в байты
+func DoubleSerializer(d float64) []byte {
+    buf := make([]byte, 8)
+    binary.BigEndian.PutUint64(buf, math.Float64bits(d))
+    return buf
+}
+
+// DoubleDeserializer преобразует байты в значение с плавающей точкой
+func DoubleDeserializer(data []byte) float64 {
+    return math.Float64frombits(binary.BigEndian.Uint64(data))
+}
+
+
+### 5. GOLANG
+client, err := schemaregistry.NewClient(schemaregistry.NewConfig(url))
+ser, err := avro.NewGenericSerializer(client, serde.ValueSerde, avro.NewSerializerConfig())
+deser, err := avro.NewGenericDeserializer(client, serde.ValueSerde, avro.NewDeserializerConfig())
+
+
+### 6. GOLANG
+ser, err := jsonschema.NewSerializer(client, serde.ValueSerde, jsonschema.NewSerializerConfig())
+deser, err := jsonschema.NewDeserializer(client, serde.ValueSerde, jsonschema.NewDeserializerConfig())
+
+
+### 7. GOLANG
+client, err := schemaregistry.NewClient(schemaregistry.NewConfig(url))
+ser, err := protobuf.NewSerializer(client, serde.ValueSerde, protobuf.NewSerializerConfig())
+deser, err := protobuf.NewDeserializer(client, serde.ValueSerde, protobuf.NewDeserializerConfig())
+
+
+
+
+
+
+
+
+
